@@ -26,6 +26,28 @@ const watch = object(
   ["watch", "metric", "value", "level"],
 );
 
+// A new mail in a connected Microsoft 365 mailbox (the m365-intake connector). The body and the attachments' contents
+// never travel: the body is a PrivateRef, and each attachment has a ref (or null when too large to store).
+const nullableRef = { ...privateRef, type: ["object", "null"] } as const;
+const m365Mail = object(
+  {
+    mailbox: str,
+    from_address: optStr,
+    from_domain: optStr,
+    has_attachment: { type: "boolean" },
+    subject: optStr,
+    received_at: str,
+    message_id_hash: { type: "string", minLength: 1, maxLength: 128 },
+    attachments: {
+      type: "array",
+      maxItems: 100,
+      items: object({ name: optStr, size: { type: "number", minimum: 0 }, sha256: { type: ["string", "null"], maxLength: 64 }, ref: nullableRef }, ["name", "size", "sha256", "ref"]),
+    },
+    body: privateRef,
+  },
+  ["mailbox", "from_address", "from_domain", "has_attachment", "received_at", "message_id_hash", "attachments", "body"],
+);
+
 export const CATALOG: readonly EventType[] = [
   {
     type: "sitespring.form.submitted",
@@ -74,6 +96,13 @@ export const CATALOG: readonly EventType[] = [
     schema: watch,
     filterable: ["watch", "grain"],
     private: [],
+  },
+  {
+    type: "m365.mail.received",
+    source: "connector:m365",
+    schema: m365Mail,
+    filterable: ["mailbox", "from_address", "from_domain", "has_attachment"],
+    private: ["body"],
   },
 ];
 

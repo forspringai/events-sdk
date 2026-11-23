@@ -101,3 +101,23 @@ describe("validate: the security read of 2026-11-23", () => {
     expect(reason(form({ data: { ...form().data, consent: { given: true, version: "2026-11", at: "2026-11-23T12:00:00Z" } } }))).toBe("ok");
   });
 });
+
+describe("m365.mail.received (0.2.0)", () => {
+  const ref = { ref: "r1.x.1.sig", expires: "2026-12-07T12:00:00Z" };
+  const mail = (data: Record<string, unknown> = {}) => ({
+    id: "m365:noon:abc", time: "2026-11-23T12:00:00Z", org: "noon", source: "connector:m365", type: "m365.mail.received",
+    subject: "m365:mail/abc", actor: { kind: "system" as const, id: null }, cause: null,
+    data: { mailbox: "orders@nooncph.dk", from_address: "noreply@officeguru.com", from_domain: "officeguru.com", has_attachment: true, subject: "Ordrer for 24-11-2026", received_at: "2026-11-23T12:00:00Z", message_id_hash: "abc", attachments: [{ name: "production-list-20261124.csv", size: 1200, sha256: "a".repeat(64), ref }, { name: "big.pdf", size: 30_000_000, sha256: null, ref: null }], body: ref, ...data },
+  });
+  it("accepts a mail with refs, and an oversized attachment listed without content", () => {
+    expect(reason(mail())).toBe("ok");
+  });
+  it("refuses the body or an attachment's content as a value", () => {
+    expect(reason(mail({ body: "Hej, her er ordren" }))).toBe("private_value");
+    expect(reason(mail({ attachments: [{ name: "a.csv", size: 1, sha256: null, ref: null, content: "x;y" }] }))).toBe("bad_data");
+    expect(reason(mail({ attachments: [{ name: "a.csv", size: 1, sha256: null, ref: "inline" }] }))).toBe("bad_data");
+  });
+  it("lists the filterable fields FlowSpring asked for", () => {
+    expect(eventType("m365.mail.received")?.filterable).toEqual(["mailbox", "from_address", "from_domain", "has_attachment"]);
+  });
+});
