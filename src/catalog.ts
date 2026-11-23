@@ -48,6 +48,26 @@ const m365Mail = object(
   ["mailbox", "from_address", "from_domain", "has_attachment", "received_at", "message_id_hash", "attachments", "body"],
 );
 
+// A mail kept by mail-in (inbound mail as a platform feature: <name>.<org>@in.forspring.ai, catch-all). Everything a
+// person wrote is private: the subject, the body, the raw .eml and the attachments (one ref to a JSON manifest of
+// {name, size, sha256, content_type, ref}, since names can be personal). Only routing facts stay public.
+const mailReceived = object(
+  {
+    address: str,
+    from_address: optStr,
+    from_domain: optStr,
+    has_attachment: { type: "boolean" },
+    attachment_count: { type: "integer", minimum: 0, maximum: 100 },
+    received_at: str,
+    message_id_hash: { type: "string", minLength: 1, maxLength: 128 },
+    subject: privateRef,
+    body: privateRef,
+    eml: privateRef,
+    attachments: privateRef,
+  },
+  ["address", "from_address", "from_domain", "has_attachment", "attachment_count", "received_at", "message_id_hash", "subject", "body", "eml", "attachments"],
+);
+
 export const CATALOG: readonly EventType[] = [
   {
     type: "sitespring.form.submitted",
@@ -103,6 +123,13 @@ export const CATALOG: readonly EventType[] = [
     schema: m365Mail,
     filterable: ["mailbox", "from_address", "from_domain", "has_attachment"],
     private: ["body"],
+  },
+  {
+    type: "mail.received",
+    source: "mail-in",
+    schema: mailReceived,
+    filterable: ["address", "from_address", "from_domain", "has_attachment"],
+    private: ["subject", "body", "eml", "attachments"],
   },
 ];
 

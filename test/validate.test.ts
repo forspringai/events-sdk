@@ -121,3 +121,27 @@ describe("m365.mail.received (0.2.0)", () => {
     expect(eventType("m365.mail.received")?.filterable).toEqual(["mailbox", "from_address", "from_domain", "has_attachment"]);
   });
 });
+
+describe("mail.received (0.3.0)", () => {
+  const ref = { ref: "r1.x.1.sig", expires: "2026-12-07T12:00:00Z" };
+  const mail = (data: Record<string, unknown> = {}) => ({
+    id: "mail-in:noon:abc", time: "2026-11-23T12:00:00Z", org: "noon", source: "mail-in", type: "mail.received",
+    subject: "mail-in:mail/abc", actor: { kind: "system" as const, id: null }, cause: null,
+    data: { address: "orders.noon@in.forspring.ai", from_address: "noreply@officeguru.com", from_domain: "officeguru.com", has_attachment: true, attachment_count: 1, received_at: "2026-11-23T12:00:00Z", message_id_hash: "abc", subject: ref, body: ref, eml: ref, attachments: ref, ...data },
+  });
+  it("accepts a mail whose contents are all refs", () => {
+    expect(reason(mail())).toBe("ok");
+  });
+  it("refuses the subject, body or attachment list as values", () => {
+    expect(reason(mail({ subject: "Ordrer for 24-11-2026" }))).toBe("private_value");
+    expect(reason(mail({ body: "Hej" }))).toBe("private_value");
+    expect(reason(mail({ attachments: [{ name: "a.csv" }] }))).toBe("private_value");
+    expect(reason(mail({ attachment_count: 1.5 }))).toBe("bad_data");
+    expect(reason(mail({ attachment_count: 101 }))).toBe("bad_data");
+  });
+  it("comes only from mail-in, with routing facts filterable and contents private", () => {
+    expect(reason({ ...mail(), source: "connector:m365" })).toBe("source_mismatch");
+    expect(eventType("mail.received")?.filterable).toEqual(["address", "from_address", "from_domain", "has_attachment"]);
+    expect(eventType("mail.received")?.private).toEqual(["subject", "body", "eml", "attachments"]);
+  });
+});
