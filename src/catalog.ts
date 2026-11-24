@@ -61,7 +61,8 @@ const mailReceived = object(
     received_at: str,
     message_id_hash: { type: "string", minLength: 1, maxLength: 128 },
     // 0.4.0: false when the sender is not on the address's allow-list but the mail was kept via one of the customer's
-    // open inboxes (e.g. orders@): flag it, never auto-process. Optional: 0.3.0 events lack it.
+    // open inboxes (e.g. orders@): flag it, never auto-process; its from_* fields are then unverified. Optional:
+    // 0.3.0 events lack it.
     sender_known: { type: "boolean" },
     subject: privateRef,
     body: privateRef,
