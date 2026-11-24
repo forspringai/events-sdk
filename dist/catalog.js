@@ -45,6 +45,10 @@ const mailReceived = object({
     attachment_count: { type: "integer", minimum: 0, maximum: 100 },
     received_at: str,
     message_id_hash: { type: "string", minLength: 1, maxLength: 128 },
+    // 0.4.0: false when the sender is not on the address's allow-list but the mail was kept via one of the customer's
+    // open inboxes (e.g. orders@): flag it, never auto-process; its from_* fields are then unverified. Optional:
+    // 0.3.0 events lack it.
+    sender_known: { type: "boolean" },
     subject: privateRef,
     body: privateRef,
     eml: privateRef,
@@ -104,7 +108,7 @@ export const CATALOG = [
         type: "mail.received",
         source: "mail-in",
         schema: mailReceived,
-        filterable: ["address", "from_address", "from_domain", "has_attachment"],
+        filterable: ["address", "from_address", "from_domain", "has_attachment", "sender_known"],
         private: ["subject", "body", "eml", "attachments"],
     },
 ];
