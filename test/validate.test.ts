@@ -139,9 +139,13 @@ describe("mail.received (0.3.0)", () => {
     expect(reason(mail({ attachment_count: 1.5 }))).toBe("bad_data");
     expect(reason(mail({ attachment_count: 101 }))).toBe("bad_data");
   });
+  it("carries sender_known (0.4.0) as an optional boolean", () => {
+    expect(reason(mail({ sender_known: false }))).toBe("ok");
+    expect(reason(mail({ sender_known: "no" }))).toBe("bad_data");
+  });
   it("comes only from mail-in, with routing facts filterable and contents private", () => {
     expect(reason({ ...mail(), source: "connector:m365" })).toBe("source_mismatch");
-    expect(eventType("mail.received")?.filterable).toEqual(["address", "from_address", "from_domain", "has_attachment"]);
+    expect(eventType("mail.received")?.filterable).toEqual(["address", "from_address", "from_domain", "has_attachment", "sender_known"]);
     expect(eventType("mail.received")?.private).toEqual(["subject", "body", "eml", "attachments"]);
   });
 });

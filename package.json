@@ -1,6 +1,6 @@
 {
   "name": "@forspring/events",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Forspring suite events: the envelope, the type catalog, validation, signing and a D1 outbox for products that publish to the event hub",
   "license": "MIT",
   "type": "module",
